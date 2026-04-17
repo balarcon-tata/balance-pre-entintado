@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balance de líneas Cantos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #0f1117;
+  --surface:     #161b27;
+  --surface2:    #1c2233;
+  --border:      #252d3d;
+  --border2:     #2e3a50;
+  --text-1:      #e8ecf4;
+  --text-2:      #8d98b0;
+  --text-3:      #5a6782;
+  --blue:        #4f8ef7;
+  --blue-dim:    rgba(79,142,247,.12);
+  --green:       #34c984;
+  --green-dim:   rgba(52,201,132,.12);
+  --amber:       #f0a94c;
+  --amber-dim:   rgba(240,169,76,.12);
+  --indigo:      #8b7ef8;
+  --indigo-dim:  rgba(139,126,248,.12);
+  --red:         #f06060;
+  --radius-sm:   6px;
+  --radius:      10px;
+  --radius-lg:   14px;
+  --shadow:      0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+  --font-body:   'DM Sans', sans-serif;
+  --font-mono:   'DM Mono', monospace;
+}
+
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-1);
+  min-height: 100vh;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+/* ── HEADER ── */
+.app-header {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(15,17,23,.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner {
+  max-width: 1440px; margin: 0 auto; padding: 0 28px;
+  height: 60px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
+}
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+  width: 36px; height: 36px;
+  background: var(--blue-dim);
+  border: 1px solid rgba(79,142,247,.2);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--blue); flex-shrink: 0;
+}
+.brand-title { font-size: 1rem; font-weight: 600; color: var(--text-1); letter-spacing: -.01em; }
+.brand-sub   { font-size: .73rem; color: var(--text-3); margin-top: 1px; }
+.header-meta { display: flex; align-items: center; gap: 14px; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .72rem; font-weight: 500; color: var(--green);
+  background: var(--green-dim); border: 1px solid rgba(52,201,132,.2);
+  border-radius: 999px; padding: 3px 10px;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--green); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.5; transform:scale(.8); }
+}
+.header-clock { font-family: var(--font-mono); font-size: .78rem; color: var(--text-3); }
+.btn-tema {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 999px; color: var(--text-2);
+  font-family: var(--font-body); font-size: .75rem; font-weight: 500;
+  padding: 5px 12px; cursor: pointer; transition: all .2s;
+  white-space: nowrap;
+}
+.btn-tema:hover { background: rgba(255,255,255,.15); color: var(--text-1); }
+
+/* ── MAIN ── */
+.app-main {
+  max-width: 1440px; margin: 0 auto;
+  padding: 28px 28px 48px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+/* ── UPLOAD ── */
+.upload-section { padding: 22px 24px; }
+.upload-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+}
+.upload-title-row { display: flex; align-items: center; gap: 10px; color: var(--blue); }
+.upload-title { font-size: .95rem; font-weight: 600; color: var(--text-1); }
+.upload-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.upload-grid { display: grid; gap: 14px; margin-bottom: 16px; }
+.upload-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.upload-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.upload-card {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 16px;
+  display: flex; align-items: center; gap: 12px; transition: border-color .2s;
+}
+.upload-card.loaded { border-color: rgba(52,201,132,.35); }
+.upload-card-optional { border-style: dashed; opacity: .85; }
+.upload-card-optional.loaded { border-style: solid; opacity: 1; }
+.upload-card-icon {
+  width: 42px; height: 42px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.upload-card-info { flex: 1; min-width: 0; }
+.upload-card-label { font-size: .8rem; font-weight: 500; color: var(--text-1); margin-bottom: 3px; }
+.upload-card-status { font-size: .72rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; display: inline-block; }
+.upload-card-status.pending   { background: rgba(90,103,130,.15); color: var(--text-3); border: 1px solid rgba(90,103,130,.2); }
+.upload-card-status.loaded-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(52,201,132,.2); }
+.upload-card-filename {
+  font-size: .68rem; color: var(--text-3); margin-top: 3px;
+  font-family: var(--font-mono); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+}
+.upload-optional-badge {
+  font-size: .6rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--indigo);
+  background: var(--indigo-dim); border: 1px solid rgba(139,126,248,.2);
+  border-radius: 999px; padding: 1px 7px; margin-left: 6px;
+  vertical-align: middle;
+}
+.btn-upload {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--blue); border: none;
+  border-radius: var(--radius-sm); color: #fff;
+  font-family: var(--font-body); font-size: .75rem; font-weight: 600;
+  padding: 6px 12px; cursor: pointer; transition: opacity .15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.btn-upload:hover { opacity: .85; }
+.btn-upload-green  { background: var(--green);  color: #0a2b1e; }
+.btn-upload-indigo { background: var(--indigo);  color: #fff; }
+.upload-message {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .8rem; font-weight: 500;
+  padding: 10px 16px; border-radius: var(--radius-sm);
+}
+.upload-wait    { background: rgba(79,142,247,.08); color: var(--blue);  border: 1px solid rgba(79,142,247,.18); }
+.upload-success { background: var(--green-dim);     color: var(--green); border: 1px solid rgba(52,201,132,.2); }
+.upload-error   { background: rgba(240,96,96,.1);   color: var(--red);   border: 1px solid rgba(240,96,96,.2); }
+.upload-warn    { background: var(--amber-dim);     color: var(--amber); border: 1px solid rgba(240,169,76,.2); }
+
+/* ── FUENTE TABS ── */
+.fuente-tabs { display: flex; gap: 6px; padding: 2px 0 0; }
+.fuente-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 18px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 999px; color: var(--text-3);
+  font-family: var(--font-body); font-size: .8rem; font-weight: 500;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.fuente-tab:hover:not(:disabled) { border-color: var(--text-3); color: var(--text-1); }
+.fuente-tab:disabled { opacity: .38; cursor: not-allowed; }
+.fuente-tab-active {
+  background: var(--blue); border-color: var(--blue);
+  color: #fff !important;
+  box-shadow: 0 2px 10px rgba(79,142,247,.35);
+}
+
+/* ── BALANCEAR ── */
+.btn-balancear {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #4f8ef7 0%, #3a6fd8 100%);
+  border: none; border-radius: var(--radius-sm); color: #fff;
+  font-family: var(--font-body); font-size: .9rem; font-weight: 700;
+  letter-spacing: .08em; padding: 10px 24px; cursor: pointer;
+  box-shadow: 0 2px 12px rgba(79,142,247,.4), 0 1px 3px rgba(0,0,0,.3);
+  transition: all .18s ease; position: relative; overflow: hidden;
+}
+.btn-balancear::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.btn-balancear:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,142,247,.5), 0 2px 6px rgba(0,0,0,.3); }
+.btn-balancear:active { transform: translateY(0); }
+.btn-balancear.processing { opacity: .75; cursor: not-allowed; transform: none; }
+.btn-balancear svg { flex-shrink: 0; transition: transform .18s; }
+.btn-balancear:hover svg { transform: translateX(3px); }
+.btn-secondary {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text-2);
+  font-family: var(--font-body); font-size: .82rem; font-weight: 500;
+  padding: 7px 14px; cursor: pointer; transition: all .15s;
+}
+.btn-secondary:hover { background: var(--surface2); color: var(--text-1); }
+.btn-export {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(52,201,132,.12);
+  border: 1px solid rgba(52,201,132,.3);
+  border-radius: var(--radius-sm); color: var(--green);
+  font-family: var(--font-body); font-size: .85rem; font-weight: 600;
+  padding: 9px 18px; cursor: pointer; transition: all .18s ease;
+  white-space: nowrap;
+}
+.btn-export:hover:not(:disabled) { background: rgba(52,201,132,.2); border-color: rgba(52,201,132,.5); box-shadow: 0 2px 10px rgba(52,201,132,.25); }
+.btn-export:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── FILTERS ── */
+.filters-section { padding: 18px 22px; }
+.filters-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-3); margin-bottom: 14px;
+}
+.filters-grid { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1 1 170px; }
+.filter-group label { font-size: .72rem; font-weight: 500; color: var(--text-2); }
+.filter-group input[type="date"],
+.filter-input-search {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text-1);
+  font-family: var(--font-body); font-size: .85rem;
+  padding: 7px 10px; outline: none; appearance: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.filter-group input:focus, .filter-input-search:focus {
+  border-color: rgba(79,142,247,.5); box-shadow: 0 0 0 3px rgba(79,142,247,.1);
+}
+.filter-input-search::placeholder { color: var(--text-3); }
+.filter-actions { flex: 0 0 auto; justify-content: flex-end; }
+.btn-reset {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text-2);
+  font-family: var(--font-body); font-size: .82rem; font-weight: 500;
+  padding: 7px 14px; cursor: pointer; transition: all .15s;
+}
+.btn-reset:hover { background: var(--surface2); color: var(--text-1); }
+
+/* Línea dropdown */
+.filter-group-lineas { position: relative; }
+.linea-dropdown { position: relative; }
+.linea-dropdown-btn {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text-1);
+  font-family: var(--font-body); font-size: .85rem;
+  padding: 7px 10px; outline: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  transition: border-color .15s, box-shadow .15s; text-align: left;
+}
+.linea-dropdown-btn:focus,
+.linea-dropdown-btn:hover { border-color: rgba(79,142,247,.5); box-shadow: 0 0 0 3px rgba(79,142,247,.1); }
+.linea-dropdown-panel {
+  position: absolute; top: calc(100% + 4px); left: 0;
+  min-width: 260px; max-width: 340px;
+  background: #1a2236; border: 1px solid var(--border2);
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  z-index: 500; overflow: hidden; display: none;
+}
+.linea-dropdown-panel.open { display: block; }
+.linea-dropdown-actions { display: flex; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.linea-action-btn {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text-2);
+  font-family: var(--font-body); font-size: .72rem; font-weight: 500;
+  padding: 3px 10px; cursor: pointer; transition: all .12s;
+}
+.linea-action-btn:hover { background: var(--blue-dim); color: var(--blue); border-color: rgba(79,142,247,.3); }
+.linea-dropdown-list { max-height: 220px; overflow-y: auto; padding: 4px 0; }
+.linea-dropdown-list::-webkit-scrollbar { width: 4px; }
+.linea-dropdown-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.linea-check-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; cursor: pointer; transition: background .1s;
+}
+.linea-check-item:hover { background: rgba(255,255,255,.04); }
+.linea-check-item input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--blue); flex-shrink: 0; }
+.linea-check-item label { font-size: .8rem; color: var(--text-1); cursor: pointer; font-weight: 400; line-height: 1.3; }
+
+/* ── SUMMARY ── */
+.summary-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+.summary-card { padding: 12px 14px; display: flex; align-items: center; gap: 10px; transition: transform .18s, box-shadow .18s; }
+.summary-card:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.summary-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.icon-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(79,142,247,.2); }
+.icon-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(52,201,132,.2); }
+.icon-amber  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(240,169,76,.2); }
+.icon-indigo { background: var(--indigo-dim); color: var(--indigo); border: 1px solid rgba(139,126,248,.2); }
+.summary-content { flex: 1; min-width: 0; }
+.summary-label { font-size: .62rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+.summary-value { font-size: 1.25rem; font-weight: 700; color: var(--text-1); font-family: var(--font-mono); letter-spacing: -.02em; line-height: 1.1; }
+.summary-card-horas { gap: 8px; min-width: 0; }
+.horas-semana-wrap { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.horas-semana-input {
+  width: 50px; background: var(--bg); border: 1.5px solid rgba(79,142,247,.35);
+  border-radius: 5px; color: var(--blue);
+  font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800;
+  padding: 2px 4px; text-align: center; outline: none; -moz-appearance: textfield;
+  transition: border-color .15s, box-shadow .15s;
+}
+.horas-semana-input::-webkit-outer-spin-button,
+.horas-semana-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.horas-semana-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,142,247,.15); }
+.horas-semana-unit { font-family: var(--font-mono); font-size: .9rem; font-weight: 600; color: var(--text-3); }
+.horas-semana-hint { font-size: .55rem; color: var(--text-3); margin-top: 2px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── TABLE ── */
+.table-section { overflow: hidden; }
+.table-header { padding: 18px 22px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); }
+.section-title { font-size: .92rem; font-weight: 600; color: var(--text-1); letter-spacing: -.01em; }
+.section-sub   { font-size: .72rem; color: var(--text-3); margin-top: 2px; font-family: var(--font-mono); }
+.table-count { font-family: var(--font-mono); font-size: .75rem; color: var(--text-3); background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.table-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+thead th {
+  padding: 9px 12px; text-align: left;
+  font-size: .66rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-3);
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  white-space: nowrap; position: sticky; top: 0; z-index: 10;
+}
+thead tr:nth-child(2) th {
+  position: sticky; top: 34px; z-index: 9;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+thead th.num { text-align: right; }
+thead th.th-dia {
+  text-align: center; min-width: 100px;
+  background: var(--surface2); border-left: 1px solid var(--border);
+}
+thead th.th-hctotal {
+  text-align: right; background: rgba(79,142,247,.08);
+  color: var(--blue); border-left: 1px solid var(--border); min-width: 80px;
+}
+thead th .th-dia-nombre { display: block; font-size: .72rem; color: var(--text-2); font-weight: 600; }
+thead th .th-dia-fecha  { display: block; font-size: .65rem; color: var(--text-3); font-weight: 400; font-family: var(--font-mono); }
+
+.tr-hc-resumen th { background: rgba(79,142,247,.07); border-bottom: 1px solid rgba(79,142,247,.2); }
+.th-hc-label { color: var(--blue); font-size: .65rem; font-weight: 700; letter-spacing: .08em; }
+.th-hc-dia { text-align: center; font-family: var(--font-mono); color: var(--blue); border-left: 1px solid var(--border); font-size: .75rem; font-weight: 700; }
+.th-hc-total { text-align: right; font-family: var(--font-mono); color: var(--blue); border-left: 1px solid var(--border); font-size: .75rem; font-weight: 700; background: rgba(79,142,247,.12); }
+.hc-sab { background: rgba(139,126,248,.1) !important; color: var(--indigo) !important; border-left: 2px solid rgba(139,126,248,.25) !important; }
+
+.th-horas-input {
+  width: 42px; background: rgba(79,142,247,.1); border: 1px solid rgba(79,142,247,.25);
+  border-radius: 4px; color: var(--blue); font-family: var(--font-mono);
+  font-size: .72rem; font-weight: 600; padding: 2px 4px; text-align: center; outline: none;
+  -moz-appearance: textfield; display: block; margin: 2px auto 0; transition: border-color .15s;
+}
+.th-horas-input::-webkit-outer-spin-button,
+.th-horas-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.th-horas-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(79,142,247,.12); background: rgba(79,142,247,.15); }
+
+tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,.025); }
+tbody td { padding: 9px 12px; color: var(--text-1); white-space: nowrap; vertical-align: middle; }
+tbody td.num { text-align: right; font-family: var(--font-mono); font-size: .75rem; }
+
+.td-dia { text-align: center; border-left: 1px solid var(--border); padding: 4px 6px; cursor: pointer; position: relative; transition: background .15s; min-width: 100px; }
+.td-dia:hover { background: rgba(79,142,247,.08); }
+.td-dia.td-dia-vacia { color: var(--text-3); font-family: var(--font-mono); font-size: .72rem; }
+.celda-dia-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.celda-u-row { display: flex; align-items: center; justify-content: center; }
+.celda-u-input {
+  width: 70px; background: transparent; border: 1px solid transparent;
+  border-radius: 4px; color: var(--text-1); font-family: var(--font-mono);
+  font-size: .75rem; font-weight: 500; text-align: center; padding: 2px 4px; outline: none;
+  transition: border-color .15s, background .15s; -moz-appearance: textfield;
+}
+.celda-u-input::-webkit-outer-spin-button,
+.celda-u-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.celda-u-input:hover { border-color: var(--border2); background: rgba(255,255,255,.04); }
+.celda-u-input:focus { border-color: var(--blue); background: rgba(79,142,247,.08); box-shadow: 0 0 0 2px rgba(79,142,247,.15); }
+.celda-u-suffix { font-size: .65rem; color: var(--text-3); font-family: var(--font-mono); margin-left: 2px; }
+.celda-dia-hc { font-family: var(--font-mono); font-size: .68rem; color: var(--blue); font-weight: 600; }
+.td-hctotal { text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: .82rem; color: var(--blue); border-left: 1px solid var(--border); background: rgba(79,142,247,.04); }
+.td-linea { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.linea-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+thead th.th-dia-sab { background: rgba(139,126,248,.06); border-left: 2px solid rgba(139,126,248,.25); }
+thead th.th-dia-sab .th-dia-nombre { color: var(--indigo); }
+thead th.th-dia-sab .th-dia-fecha  { color: rgba(139,126,248,.6); }
+tbody td.td-dia-sab { border-left: 2px solid rgba(139,126,248,.2); background: rgba(139,126,248,.03); }
+tbody td.td-dia-sab:hover { background: rgba(139,126,248,.08); }
+tbody td.td-dia-sab .celda-dia-hc { color: var(--indigo); }
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-3); font-size: .85rem; }
+.empty-state svg { margin-bottom: 10px; opacity: .4; display: block; margin-left: auto; margin-right: auto; }
+
+/* ── TOOLTIP ── */
+.tooltip-detalle {
+  position: fixed; z-index: 9999;
+  background: #1a2236; border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+  padding: 0; max-width: 460px; min-width: 300px;
+  max-height: 320px; overflow: hidden;
+  display: flex; flex-direction: column;
+  pointer-events: auto; animation: tooltipFade .12s ease;
+}
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tooltip-header { padding: 10px 14px 8px; border-bottom: 1px solid var(--border); background: rgba(79,142,247,.06); flex-shrink: 0; }
+.tooltip-title { font-size: .78rem; font-weight: 600; color: var(--text-1); }
+.tooltip-sub   { font-size: .68rem; color: var(--text-3); margin-top: 2px; font-family: var(--font-mono); }
+.tooltip-body { overflow-y: auto; flex: 1; }
+.tooltip-body::-webkit-scrollbar { width: 4px; }
+.tooltip-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.tooltip-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+.tooltip-table th {
+  padding: 6px 10px; text-align: left; font-size: .62rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--text-3);
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  white-space: nowrap; position: sticky; top: 0;
+}
+.tooltip-table th.r { text-align: right; }
+.tooltip-table td { padding: 6px 10px; color: var(--text-1); border-bottom: 1px solid rgba(37,45,61,.6); white-space: nowrap; }
+.tooltip-table td.r { text-align: right; font-family: var(--font-mono); }
+.tooltip-table tr:last-child td { border-bottom: none; }
+.tooltip-table tr:hover td { background: rgba(255,255,255,.03); }
+.tooltip-hc-val { font-family: var(--font-mono); font-weight: 600; color: var(--blue); }
+.tt-ef-val { font-family: var(--font-mono); color: var(--amber); font-size: .7rem; }
+.tooltip-footer {
+  padding: 8px 14px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(79,142,247,.04); flex-shrink: 0;
+}
+.tooltip-footer-label { font-size: .68rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; }
+.tooltip-footer-val { font-family: var(--font-mono); font-weight: 700; font-size: .88rem; color: var(--blue); }
+
+/* ── FOOTER ── */
+.app-footer {
+  max-width: 1440px; margin: 0 auto; padding: 16px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: .72rem; color: var(--text-3); border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+/* ── MODO CLARO ── */
+body.light-mode {
+  --bg:#f3f4f6; --surface:#ffffff; --surface2:#f9fafb;
+  --border:#e5e7eb; --border2:#d1d5db;
+  --text-1:#111827; --text-2:#374151; --text-3:#6b7280;
+  --blue:#2563eb; --blue-dim:rgba(37,99,235,.1);
+  --green:#16a34a; --green-dim:rgba(22,163,74,.1);
+  --amber:#d97706; --amber-dim:rgba(217,119,6,.1);
+  --indigo:#4f46e5; --indigo-dim:rgba(79,70,229,.1);
+  --red:#dc2626;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+body.light-mode .app-header { background: rgba(255,255,255,.92); border-bottom-color: #e5e7eb; }
+body.light-mode .btn-tema { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.12); color: #374151; }
+body.light-mode .btn-tema:hover { background: rgba(0,0,0,.1); }
+body.light-mode table thead th { background: #f9fafb; color: #6b7280; }
+body.light-mode tbody tr:hover { background: rgba(0,0,0,.025); }
+body.light-mode .tooltip-detalle { background: #ffffff; border-color: #e5e7eb; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+body.light-mode .tooltip-header { background: rgba(37,99,235,.05); border-bottom-color: #e5e7eb; }
+body.light-mode .tooltip-title { color: #111827; }
+body.light-mode .tooltip-sub   { color: #6b7280; }
+body.light-mode .tooltip-table th { background: #f3f4f6; color: #6b7280; }
+body.light-mode .tooltip-table td { color: #111827; border-color: #f0f0f0; }
+body.light-mode .tooltip-table tr:hover td { background: #f9fafb; }
+body.light-mode .linea-dropdown-panel { background: #ffffff; border-color: #e5e7eb; }
+body.light-mode .linea-check-item:hover { background: rgba(0,0,0,.03); }
+body.light-mode .linea-check-item label { color: #111827; }
+body.light-mode .tr-hc-resumen th { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.2); }
+body.light-mode .celda-u-input { color: #111827; }
+body.light-mode .celda-u-input:hover { background: rgba(0,0,0,.03); border-color: #d1d5db; }
+body.light-mode .celda-u-input:focus { background: rgba(37,99,235,.05); }
+body.light-mode .upload-wait { background: rgba(37,99,235,.06); }
+body.light-mode .upload-success { background: rgba(22,163,74,.08); }
+body.light-mode .upload-error { background: rgba(220,38,38,.06); }
+body.light-mode .horas-semana-input { background: #ffffff; border-color: rgba(37,99,235,.3); }
+body.light-mode .th-horas-input { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.2); }
+body.light-mode .fuente-tab { background: #f9fafb; border-color: #d1d5db; color: #6b7280; }
+body.light-mode .fuente-tab-active { background: #2563eb; border-color: #2563eb; color: #fff !important; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ── RESUMEN POR LÍNEA ── */
+.resumen-linea-section { overflow: hidden; }
+.resumen-linea-header {
+  padding: 16px 22px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; border-bottom: 1px solid var(--border);
+}
+.resumen-linea-scroll { overflow-x: auto; max-height: 380px; overflow-y: auto; }
+.resumen-linea-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.resumen-linea-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.tbl-resumen { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.tbl-resumen thead th {
+  padding: 8px 12px; text-align: left;
+  font-size: .66rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-3);
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  white-space: nowrap; position: sticky; top: 0; z-index: 8;
+}
+.tbl-resumen thead th.r { text-align: right; }
+.tbl-resumen thead th.th-rdia {
+  text-align: center; border-left: 1px solid var(--border); min-width: 88px;
+  background: var(--surface2);
+}
+.tbl-resumen thead th.th-rdia-sab {
+  background: rgba(139,126,248,.06);
+  border-left: 2px solid rgba(139,126,248,.25);
+}
+.tbl-resumen thead th.th-rdia-sab .rh-nombre { color: var(--indigo); }
+.tbl-resumen thead th.th-rtotal {
+  text-align: right; background: rgba(79,142,247,.08);
+  color: var(--blue); border-left: 1px solid var(--border); min-width: 80px;
+}
+.rh-nombre { display: block; font-size: .7rem; color: var(--text-2); font-weight: 600; }
+.rh-fecha  { display: block; font-size: .63rem; color: var(--text-3); font-weight: 400; font-family: var(--font-mono); }
+
+.tbl-resumen tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+.tbl-resumen tbody tr:last-child { border-bottom: none; }
+.tbl-resumen tbody tr:hover { background: rgba(255,255,255,.025); }
+.tbl-resumen tbody td { padding: 8px 12px; color: var(--text-1); white-space: nowrap; vertical-align: middle; }
+.tbl-resumen tbody td.td-rval {
+  text-align: right; font-family: var(--font-mono); font-size: .75rem;
+  border-left: 1px solid var(--border); color: var(--text-2);
+}
+.tbl-resumen tbody td.td-rval-sab {
+  border-left: 2px solid rgba(139,126,248,.2); background: rgba(139,126,248,.03);
+}
+.tbl-resumen tbody td.td-rval-has { color: var(--blue); font-weight: 600; }
+.tbl-resumen tbody td.td-rtotal {
+  text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: .8rem;
+  color: var(--blue); border-left: 1px solid var(--border); background: rgba(79,142,247,.04);
+}
+.tr-resumen-total td {
+  background: rgba(79,142,247,.07) !important;
+  border-top: 1px solid rgba(79,142,247,.25) !important;
+  font-weight: 700 !important; color: var(--text-1) !important;
+}
+.tr-resumen-total td.td-rval { color: var(--blue) !important; }
+.tr-resumen-total td.td-rtotal { color: var(--blue) !important; background: rgba(79,142,247,.12) !important; }
+
+/* Selector de fuente integrado en la carga */
+.upload-fuente-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0 0; border-top: 1px solid var(--border); margin-top: 4px;
+  flex-wrap: wrap; gap: 10px;
+}
+.upload-fuente-label {
+  font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-3);
+  display: flex; align-items: center; gap: 6px;
+}
+
+body.light-mode .tbl-resumen thead th { background: #f9fafb; color: #6b7280; }
+body.light-mode .tbl-resumen tbody tr:hover { background: rgba(0,0,0,.025); }
+body.light-mode .tr-resumen-total td { background: rgba(37,99,235,.07) !important; }
+
+@media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(3,1fr); } .upload-grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px)  { .summary-grid { grid-template-columns: repeat(2,1fr); } .upload-grid-2, .upload-grid-3 { grid-template-columns: 1fr; } .app-main { padding: 16px 16px 32px; } .header-inner { padding: 0 16px; } .brand-sub { display:none; } }
+</style>
+</head>
+<body>
+
+  <div id="tooltipDetalle" class="tooltip-detalle" style="display:none;"></div>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="1" y="1" width="8" height="8" rx="2" fill="currentColor" opacity="0.9"/>
+            <rect x="13" y="1" width="8" height="8" rx="2" fill="currentColor" opacity="0.5"/>
+            <rect x="1" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.5"/>
+            <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.9"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Balance de líneas Cantos</h1>
+          <p class="brand-sub">Planificación de recurso HC — Área PRE-ENTINTADO en tiempo real</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="live-badge"><span class="live-dot"></span>En vivo</span>
+        <button id="btnTema" class="btn-tema" onclick="toggleTema()">
+          <svg id="iconTemaOscuro" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:none"><path d="M8 3a5 5 0 1 0 5 5 3.5 3.5 0 0 1-5-5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <svg id="iconTemaClaro" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span id="lblTema">Modo claro</span>
+        </button>
+        <span id="reloj" class="header-clock"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- CARGA DE ARCHIVOS -->
+    <section class="upload-section card">
+      <div class="upload-section-header">
+        <div class="upload-title-row">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v10M5 6l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <h2 class="upload-title">Carga de archivos</h2>
+        </div>
+        <div class="upload-header-actions">
+          <button id="btnLimpiarArchivos" class="btn-secondary">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5A5 5 0 1 1 3 10.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1.5 10.5V6.5H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Limpiar archivos
+          </button>
+          <button id="btnBalancear" class="btn-balancear">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            BALANCEAR
+          </button>
+          <button id="btnExportarExcel" class="btn-export" disabled>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 11v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1M7.5 1v8M4.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- 3 tarjetas de carga: Programa | Rutas | Proyección (opcional) -->
+      <div class="upload-grid upload-grid-3">
+        <!-- 1. Programa de producción (obligatorio) -->
+<div class="upload-card" id="uploadCardPrograma">
+          <div class="upload-card-icon icon-blue">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="2" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h8M7 10.5h8M7 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="upload-card-info">
+            <p class="upload-card-label">Programa de producción</p>
+            <p class="upload-card-status pending" id="statusPrograma">Pendiente</p>
+            <p class="upload-card-filename" id="filenamePrograma"></p>
+          </div>
+          <label class="btn-upload" for="inputPrograma">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3 4l3.5-3L10 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Cargar
+          </label>
+          <input type="file" id="inputPrograma" accept=".xlsx,.xls" hidden />
+        </div>
+        <!-- 2. Proyección de producción (opcional) -->
+<div class="upload-card upload-card-optional" id="uploadCardProyeccion">
+          <div class="upload-card-icon icon-indigo">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 4h14M4 8h10M4 12h12M4 16h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="16" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M17 14v2l1 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="upload-card-info">
+            <p class="upload-card-label">Proyección de producción <span class="upload-optional-badge">Opcional</span></p>
+            <p class="upload-card-status pending" id="statusProyeccion">Sin cargar</p>
+            <p class="upload-card-filename" id="filenameProyeccion"></p>
+          </div>
+          <label class="btn-upload btn-upload-indigo" for="inputProyeccion">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3 4l3.5-3L10 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Cargar
+          </label>
+          <input type="file" id="inputProyeccion" accept=".xlsx,.xls" hidden />
+        </div>
+        <!-- 3. Rutas Activas (obligatorio) -->
+<div class="upload-card" id="uploadCardRutas">
+          <div class="upload-card-icon icon-green">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="2" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.5h7M8 11h7M8 14.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5.5" cy="7.5" r="1" fill="currentColor"/><circle cx="5.5" cy="11" r="1" fill="currentColor"/><circle cx="5.5" cy="14.5" r="1" fill="currentColor"/></svg>
+          </div>
+          <div class="upload-card-info">
+            <p class="upload-card-label">Rutas Activas</p>
+            <p class="upload-card-status pending" id="statusRutas">Pendiente</p>
+            <p class="upload-card-filename" id="filenameRutas"></p>
+          </div>
+          <label class="btn-upload btn-upload-green" for="inputRutas">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3 4l3.5-3L10 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Cargar
+          </label>
+          <input type="file" id="inputRutas" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+
+      <div id="uploadMessage" class="upload-message upload-wait">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7.5 5v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="uploadMessageText">Cargue el Programa de producción y las Rutas Activas, luego presione BALANCEAR</span>
+      </div>
+
+      <!-- Selector de fuente integrado -->
+      <div class="upload-fuente-row">
+        <span class="upload-fuente-label">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M1 2.5h12M3 7h8M5.5 11.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Fuente activa
+        </span>
+        <div class="fuente-tabs" id="fuenteTabs" style="padding:0;">
+          <button class="fuente-tab fuente-tab-active" id="tabPrograma" onclick="setFuenteActiva('programa')">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M3.5 4.5h6M3.5 6.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Programa
+          </button>
+          <button class="fuente-tab" id="tabProyeccion" onclick="setFuenteActiva('proyeccion')" disabled>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2h9M2 5h6M2 8h8M2 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            Proyección
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILTROS -->
+    <section class="filters-section card">
+      <div class="filters-label">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 2.5h12M3 7h8M5.5 11.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Filtros
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label for="filtroFecha">Fecha</label>
+          <input type="date" id="filtroFecha" />
+        </div>
+        <div class="filter-group filter-group-lineas">
+          <label>Línea</label>
+          <div class="linea-dropdown" id="lineaDropdown">
+            <button type="button" class="linea-dropdown-btn" id="lineaDropdownBtn">
+              <span id="lineaDropdownLabel">Todas las líneas</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="linea-dropdown-panel" id="lineaDropdownPanel">
+              <div class="linea-dropdown-actions">
+                <button type="button" id="lineaSelAll" class="linea-action-btn">Todas</button>
+                <button type="button" id="lineaSelNone" class="linea-action-btn">Ninguna</button>
+              </div>
+              <div class="linea-dropdown-list" id="lineaDropdownList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label for="filtroEstilo">Estilo</label>
+          <input type="text" id="filtroEstilo" list="filtroEstiloList" placeholder="Buscar estilo..." autocomplete="off" class="filter-input-search" />
+          <datalist id="filtroEstiloList"></datalist>
+        </div>
+        <div class="filter-group">
+          <label for="filtroOrden">Orden</label>
+          <input type="text" id="filtroOrden" list="filtroOrdenList" placeholder="Buscar orden..." autocomplete="off" class="filter-input-search" />
+          <datalist id="filtroOrdenList"></datalist>
+        </div>
+        <div class="filter-group filter-actions">
+          <button id="btnLimpiarFiltros" class="btn-reset">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5A5 5 0 1 1 3 10.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1.5 10.5V6.5H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TARJETAS RESUMEN -->
+    <section class="summary-grid">
+      <div class="summary-card card">
+        <div class="summary-icon icon-blue">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 6.5h7M5.5 9h5M5.5 11.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="summary-content">
+          <p class="summary-label">Total de órdenes</p>
+          <p class="summary-value" id="statOrdenes">—</p>
+        </div>
+      </div>
+      <div class="summary-card card">
+        <div class="summary-icon icon-green">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L2 5.5v7L9 16l7-3.5v-7L9 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 2v14M2 5.5l7 3.5 7-3.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div class="summary-content">
+          <p class="summary-label">Total de unidades</p>
+          <p class="summary-value" id="statUnidades">—</p>
+        </div>
+      </div>
+      <div class="summary-card card">
+        <div class="summary-icon icon-amber">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 15c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="summary-content">
+          <p class="summary-label">HC promedio diario</p>
+          <p class="summary-value" id="statHC">—</p>
+        </div>
+      </div>
+      <div class="summary-card card">
+        <div class="summary-icon icon-indigo">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="summary-content">
+          <p class="summary-label">Líneas activas</p>
+          <p class="summary-value" id="statLineas">—</p>
+        </div>
+      </div>
+      <div class="summary-card card summary-card-horas">
+        <div class="summary-icon icon-blue">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="summary-content">
+          <p class="summary-label">Horas semana</p>
+          <div class="horas-semana-wrap">
+            <input type="number" id="horasTotalSemana" class="horas-semana-input" value="44" min="1" max="168" step="0.5" title="Total horas semana" />
+            <span class="horas-semana-unit">h</span>
+          </div>
+          <p class="horas-semana-hint" id="horasDistHint">Lun-Jue 9h · Vie 8h · Sáb 6h</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLA PRINCIPAL -->
+    <section class="table-section card">
+      <div class="table-header">
+        <div>
+          <h2 class="section-title" id="tablaTitulo">Programa de producción — PRE-ENTINTADO</h2>
+          <p class="section-sub">Hover sobre celda de día para ver detalle por operación · Edite unidades haciendo clic en el valor</p>
+        </div>
+        <div class="table-count"><span id="conteoTabla">0</span> órdenes</div>
+      </div>
+      <div class="table-scroll" id="tablaScrollContainer">
+        <table id="tablaprincipal">
+          <thead id="tablaHead"></thead>
+          <tbody id="tablaCuerpo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RESUMEN POR LÍNEA -->
+    <section class="resumen-linea-section card" id="resumenLineaSection" style="display:none;">
+      <div class="resumen-linea-header">
+        <div>
+          <h2 class="section-title">Resumen por operación — HC requerido por día</h2>
+          <p class="section-sub">Suma del HC de todas las órdenes por operación y por día</p>
+        </div>
+      </div>
+      <div class="resumen-linea-scroll">
+        <table class="tbl-resumen">
+          <thead id="resumenLineaHead"></thead>
+          <tbody id="resumenLineaBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <span>Balance de líneas Cantos — PRE-ENTINTADO</span>
+    <span>HC = (SAM × Unidades) / (Horas × 60 × Eficiencia)</span>
+  </footer>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════
+   OPERACIONES VÁLIDAS PRE-ENTINTADO Y EFICIENCIAS FIJAS
+   ═══════════════════════════════════════════════════════════ */
+const EFICIENCIAS_CANTOS = new Map([
+  ['ACABADO DE PUNTAS',         0.925],
+  ['ENTINTADO DE AGUJERO',      0.81],
+  ['ENTINTADO DE COLA',         0.80],
+  ['ENTINTADO DE SALCHICHA',    0.82],
+  ['LIMPIEZA DE AGUJEROS',      0.60],
+  ['ENTINTAR RESPALDO DE COLA', 0.60],
+]);
+
+/* ═══════════════════════════════════════════════════════════
+   HORAS POR DÍA
+   ═══════════════════════════════════════════════════════════ */
+const HORAS_DEFAULT = { 0:0, 1:9, 2:9, 3:9, 4:9, 5:8, 6:6 };
+const horasConfig   = { ...HORAS_DEFAULT };
+
+function getHorasConfig(dia) {
+  const v = parseFloat(horasConfig[dia]);
+  return (!isNaN(v) && v >= 0) ? v : (HORAS_DEFAULT[dia] || 0);
+}
+function getTotalHorasSemana() {
+  return [1,2,3,4,5,6].reduce((s,d) => s + getHorasConfig(d), 0);
+}
+function actualizarTotalHorasSemana() {
+  const tot = getTotalHorasSemana();
+  const inp = document.getElementById('horasTotalSemana');
+  if (inp && document.activeElement !== inp) inp.value = tot;
+  const hint = document.getElementById('horasDistHint');
+  if (hint) {
+    const dias = [{d:1,n:'Lun'},{d:2,n:'Mar'},{d:3,n:'Mié'},{d:4,n:'Jue'},{d:5,n:'Vie'},{d:6,n:'Sáb'}];
+    hint.textContent = dias.map(x => `${x.n} ${getHorasConfig(x.d)}h`).join(' · ');
+  }
+}
+function horasPorFecha(fechaStr) {
+  if (!fechaStr) return getTotalHorasSemana();
+  let d;
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(String(fechaStr))) {
+    const p = String(fechaStr).split(/[\/\-]/);
+    d = new Date(+p[2], +p[1]-1, +p[0]);
+  } else {
+    d = new Date(String(fechaStr)+'T00:00:00');
+  }
+  if (isNaN(d.getTime())) return getTotalHorasSemana();
+  return getHorasConfig(d.getDay());
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ESTADO GLOBAL — FUENTE DUAL (Programa + Proyección opcional)
+   ═══════════════════════════════════════════════════════════ */
+const wb = { programa: null, rutas: null, proyeccion: null };
+
+// Estado para cada fuente
+function nuevoEstado() {
+  return { rawDatos: [], datosFinales: [], datosFiltrados: [], resumenFilas: [], fechasColumnas: [] };
+}
+const estadoPrograma    = nuevoEstado();
+const estadoProyeccion  = nuevoEstado();
+let   fuenteActiva      = 'programa'; // 'programa' | 'proyeccion'
+let   mapaRutas         = new Map();
+let   lineasSeleccionadas = new Set();
+
+function getEstadoActivo() {
+  return fuenteActiva === 'proyeccion' ? estadoProyeccion : estadoPrograma;
+}
+
+function setFuenteActiva(fuente) {
+  if (fuente === 'proyeccion' && !wb.proyeccion) return;
+  fuenteActiva = fuente;
+  document.getElementById('tabPrograma').classList.toggle('fuente-tab-active', fuente === 'programa');
+  document.getElementById('tabProyeccion').classList.toggle('fuente-tab-active', fuente === 'proyeccion');
+  const titulo = document.getElementById('tablaTitulo');
+  if (titulo) titulo.textContent = fuente === 'proyeccion'
+    ? 'Proyección de producción — PRE-ENTINTADO'
+    : 'Programa de producción — PRE-ENTINTADO';
+  // Reset filtros y reconstruir
+  lineasSeleccionadas = new Set();
+  const src = getEstadoActivo();
+  const lineas = [...new Set(src.datosFinales.map(r => r.linea))].filter(Boolean).sort();
+  rellenarPanelLineas(lineas);
+  actualizarDatalistsFiltros();
+  document.getElementById('filtroFecha').value  = '';
+  document.getElementById('filtroEstilo').value = '';
+  document.getElementById('filtroOrden').value  = '';
+  aplicarFiltros();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILIDADES
+   ═══════════════════════════════════════════════════════════ */
+const DIAS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const PALETA  = ['#4f8ef7','#34c984','#f0a94c','#8b7ef8','#f06060','#5ee7d0','#f77dc4','#64d2ff'];
+
+function colorLinea(linea) {
+  let h = 0;
+  for (let i = 0; i < linea.length; i++) h = linea.charCodeAt(i) + ((h << 5) - h);
+  return PALETA[Math.abs(h) % PALETA.length];
+}
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function norm(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+function toNum(v) {
+  if (v === null || v === undefined || v === '' || v === '-') return 0;
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
+  const n = parseFloat(String(v).replace(/,/g,'.').trim());
+  return isNaN(n) ? 0 : n;
+}
+function estBase(v) {
+  const s = String(v||'').trim();
+  const i = s.indexOf('::');
+  return norm(i >= 0 ? s.slice(0,i) : s);
+}
+function estDisp(v) {
+  const s = String(v||'').trim();
+  const i = s.indexOf('::');
+  return i >= 0 ? s.slice(0,i).trim() : s;
+}
+function calcHC(sam, unidades, horas, ef) {
+  if (!horas || !ef || horas <= 0) return 0;
+  return (sam * unidades) / (horas * 60 * ef);
+}
+function serialAFecha(v) {
+  if (!v) return null;
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return null;
+    return `${String(v.getDate()).padStart(2,'0')}/${String(v.getMonth()+1).padStart(2,'0')}/${v.getFullYear()}`;
+  }
+  const s = String(v).trim();
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s)) {
+    const p = s.split(/[\/\-]/);
+    const y = p[2].length === 2 ? '20'+p[2] : p[2];
+    return `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${y}`;
+  }
+  const n = Number(s);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+  }
+  return null;
+}
+function esEncFecha(v) {
+  if (!v && v !== 0) return false;
+  if (v instanceof Date) return !isNaN(v.getTime());
+  const s = String(v).trim();
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s)) return true;
+  const n = Number(s);
+  return !isNaN(n) && n > 40000 && n < 60000;
+}
+function fechaISO(ddmm) {
+  if (!ddmm) return '';
+  const p = ddmm.split('/');
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : ddmm;
+}
+function nombreDiaDesdeFecha(ddmm) {
+  if (!ddmm) return '';
+  const p = ddmm.split('/');
+  if (p.length !== 3) return '';
+  const d = new Date(+p[2], +p[1]-1, +p[0]);
+  return isNaN(d.getTime()) ? '' : DIAS_ES[d.getDay()];
+}
+function fechaAInput(str) {
+  if (!str) return '';
+  const p = str.split('/');
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : str;
+}
+function detectHdr(rows, claves, max) {
+  const lim = Math.min(rows.length, max || 20);
+  for (let i = 0; i < lim; i++) {
+    const row = rows[i]; if (!row) continue;
+    const rn = row.map(c => norm(String(c||'')));
+    let hits = 0;
+    for (const k of claves) { const kn = norm(k); if (rn.some(h => h === kn || h.includes(kn))) hits++; }
+    if (hits >= Math.ceil(claves.length / 2)) return i;
+  }
+  return 0;
+}
+function findCol(hn, vars) {
+  for (const v of vars) { const vn = norm(v); const i = hn.findIndex(h => h === vn); if (i >= 0) return i; }
+  for (const v of vars) { const vn = norm(v); const i = hn.findIndex(h => h.includes(vn)); if (i >= 0) return i; }
+  return -1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROCESAR ARCHIVO DE PRODUCCIÓN (Programa o Proyección)
+   ═══════════════════════════════════════════════════════════ */
+function procesarArchivoProduccion(workbook) {
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows  = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: true, header: 1 });
+  if (!rows || rows.length < 2) return [];
+
+  const iH  = detectHdr(rows, ['Linea','Orden','ESTILO'], 20);
+  const hdr = rows[iH];
+  const hn  = hdr.map(c => norm(String(c||'')));
+
+  const iL  = findCol(hn, ['LINEA','LÍNEA','LINE']);
+  const iO  = findCol(hn, ['ORDEN','ORDER']);
+  const iE  = findCol(hn, ['ESTILO','STYLE']);
+  const iCli= findCol(hn, ['CLIENTE','CLIENT','CLIENTE FINAL']);
+  const iEx = findCol(hn, ['EX DATE','EXDATE','EX_DATE','FECHA EMBARQUE','SHIP DATE']);
+  const iCO = findCol(hn, ['CANT. EN O','CANT EN O','CANTIDAD EN ORDEN','CANT ORDEN','CANT. EN ORDEN']);
+  const iTP = findCol(hn, ['TOTAL PLANI','TOTAL PLANIFICADO','TOTAL PLAN','TOTAL']);
+
+  const colsFecha = [];
+  hdr.forEach((h, idx) => {
+    if (esEncFecha(h)) { const f = serialAFecha(h); if (f) colsFecha.push({ idx, fecha: f }); }
+  });
+
+  const out = [];
+  for (let r = iH + 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row || row.every(c => c === null || c === undefined || c === '')) continue;
+    const lin = iL >= 0 && row[iL] != null ? String(row[iL]).trim() : '';
+    const ord = iO >= 0 && row[iO] != null ? String(row[iO]).trim() : '';
+    const eRaw= iE >= 0 && row[iE] != null ? String(row[iE]).trim() : '';
+    if (!lin) continue;
+    if (!lin && !ord && !eRaw) continue;
+    const eN  = estBase(eRaw);
+    const eD  = estDisp(eRaw);
+    const cli = iCli >= 0 && row[iCli] != null ? String(row[iCli]).trim() : '';
+    const exD = iEx  >= 0 && row[iEx]  != null ? (serialAFecha(row[iEx]) || String(row[iEx]).trim()) : '';
+    const cO  = iCO  >= 0 ? toNum(row[iCO]) : 0;
+    const tP  = iTP  >= 0 ? toNum(row[iTP]) : 0;
+    colsFecha.forEach(({ idx, fecha }) => {
+      const u = toNum(row[idx]);
+      if (u <= 0) return;
+      out.push({ linea: lin, orden: ord, estilo: eD, estiloNorm: eN, fecha,
+                 cliente: cli, exDate: exD, cantOrden: cO, totalPlan: tP, unidades: u });
+    });
+  }
+  return out;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROCESAR RUTAS ACTIVAS — SOLO PRE-ENTINTADO
+   ═══════════════════════════════════════════════════════════ */
+function procesarRutasActivas(workbook) {
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows  = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false, header: 1 });
+  if (!rows || rows.length < 2) return new Map();
+
+  const iH  = detectHdr(rows, ['Estilo','Operacion','SAM','Etapa'], 20);
+  const hdr = rows[iH];
+  const hn  = hdr.map(c => norm(String(c||'')));
+
+  const iE   = findCol(hn, ['ESTILO','STYLE']);
+  const iOp  = findCol(hn, ['OPERACION','OPERACIÓN','OPERATION']);
+  const iSam = findCol(hn, ['SAM']);
+  let iEO = findCol(hn, ['ETAPA OPERACION','ETAPA OPERACIÓN']);
+  if (iEO < 0) iEO = hn.findIndex(h => h.includes('ETAPA') && (h.includes('OPERACION') || h.includes('OPERACIÓN')));
+  if (iEO < 0) iEO = 8;
+
+  const mapa = new Map();
+  for (let r = iH + 1; r < rows.length; r++) {
+    const row = rows[r]; if (!row) continue;
+    const etOp = norm(String(row[iEO] || ''));
+    if (etOp !== 'PRE-ENTINTADO') continue;
+    const est = norm(String(row[iE] || '').trim());
+    const op  = norm(String(row[iOp]|| '').trim());
+    const sam = toNum(row[iSam]);
+    if (!est || !op || sam <= 0) continue;
+    const ef = EFICIENCIAS_CANTOS.get(op);
+    if (ef === undefined) continue;
+    if (!mapa.has(est)) mapa.set(est, []);
+    const lst = mapa.get(est);
+    if (!lst.some(x => x.op === op)) lst.push({ op, sam, ef });
+  }
+  return mapa;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CRUZAR DATOS (rawDatos + mapaRutas → datosFinales)
+   ═══════════════════════════════════════════════════════════ */
+function cruzarDatos(rawDatos) {
+  const out = [];
+  rawDatos.forEach(reg => {
+    const ops = mapaRutas.get(reg.estiloNorm);
+    if (!ops || !ops.length) return;
+    const horas = horasPorFecha(reg.fecha);
+    if (horas <= 0) return;
+    ops.forEach(({ op, sam, ef }) => {
+      const hc = calcHC(sam, reg.unidades, horas, ef);
+      out.push({ ...reg, horas, op, sam, ef, hc });
+    });
+  });
+  return out;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GENERAR RESUMEN AGRUPADO
+   ═══════════════════════════════════════════════════════════ */
+function generarResumen(datosDetalle) {
+  const grupos   = new Map();
+  const setFechas = new Set();
+
+  datosDetalle.forEach(r => {
+    const k = `${r.linea}|||${r.orden}|||${r.estiloNorm}`;
+    if (!grupos.has(k)) {
+      grupos.set(k, {
+        linea: r.linea, orden: r.orden, estilo: r.estilo, estiloNorm: r.estiloNorm,
+        cliente: r.cliente || '', exDate: r.exDate || '',
+        cantOrden: r.cantOrden || 0, totalPlan: r.totalPlan || 0,
+        dias: {}
+      });
+    }
+    const g   = grupos.get(k);
+    const iso = fechaISO(r.fecha);
+    setFechas.add(iso);
+
+    if (!g.dias[iso]) {
+      g.dias[iso] = {
+        fecha: r.fecha, fechaISO: iso,
+        nombreDia: nombreDiaDesdeFecha(r.fecha),
+        unidades: r.unidades, hcTotalDia: 0,
+        detalleOperaciones: []
+      };
+    }
+    const dia = g.dias[iso];
+    if (!dia.unidades) dia.unidades = r.unidades;
+    dia.hcTotalDia += r.hc;
+
+    dia.detalleOperaciones.push({
+      operacion: r.op, sam: r.sam, eficiencia: r.ef,
+      hc: r.hc, unidades: r.unidades, horas: r.horas,
+      _samRaw: r.sam, _efRaw: r.ef, _horas: r.horas
+    });
+  });
+
+  const fechasOrdenadas = [...setFechas].sort();
+  return { filas: [...grupos.values()], fechas: fechasOrdenadas };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BALANCEAR
+   ═══════════════════════════════════════════════════════════ */
+function procesarBalance() {
+  const falt = [];
+  if (!wb.programa) falt.push('Programa de producción');
+  if (!wb.rutas)    falt.push('Rutas Activas');
+  if (falt.length > 0) {
+    mostrarMensajeUpload('Faltan archivos: ' + falt.join(', '), 'warn');
+    return;
+  }
+  const btn = document.getElementById('btnBalancear');
+  if (btn) { btn.classList.add('processing'); btn.textContent = 'Procesando...'; }
+
+  setTimeout(() => {
+    try {
+      console.log('===== INICIO BALANCEO CANTOS =====');
+      // Procesar rutas (una sola vez)
+      mapaRutas = procesarRutasActivas(wb.rutas);
+
+      // Procesar Programa
+      estadoPrograma.rawDatos   = procesarArchivoProduccion(wb.programa);
+      estadoPrograma.datosFinales = cruzarDatos(estadoPrograma.rawDatos);
+
+      // Procesar Proyección si existe
+      if (wb.proyeccion) {
+        estadoProyeccion.rawDatos    = procesarArchivoProduccion(wb.proyeccion);
+        estadoProyeccion.datosFinales = cruzarDatos(estadoProyeccion.rawDatos);
+      }
+
+      // Habilitar/deshabilitar tab proyección
+      const tabProy = document.getElementById('tabProyeccion');
+      if (tabProy) tabProy.disabled = !wb.proyeccion;
+
+      // Fuente activa siempre empieza en programa al balancear
+      fuenteActiva = 'programa';
+      document.getElementById('tabPrograma').classList.add('fuente-tab-active');
+      if (tabProy) tabProy.classList.remove('fuente-tab-active');
+      const titulo = document.getElementById('tablaTitulo');
+      if (titulo) titulo.textContent = 'Programa de producción — PRE-ENTINTADO';
+
+      const src = getEstadoActivo();
+      src.datosFiltrados = [...src.datosFinales];
+
+      lineasSeleccionadas = new Set();
+      const lineas = [...new Set(src.datosFinales.map(r => r.linea))].filter(Boolean).sort();
+      rellenarPanelLineas(lineas);
+      actualizarDatalistsFiltros();
+
+      document.getElementById('filtroFecha').value  = '';
+      document.getElementById('filtroEstilo').value = '';
+      document.getElementById('filtroOrden').value  = '';
+
+      document.getElementById('btnExportarExcel').disabled = (src.datosFinales.length === 0);
+      aplicarFiltros();
+
+      const nOrd = new Set(src.datosFinales.map(r=>r.orden)).size;
+      const nLin = new Set(src.datosFinales.map(r=>r.linea)).size;
+      if (src.datosFinales.length === 0) {
+        mostrarMensajeUpload(
+          `Sin coincidencias. Programa: ${estadoPrograma.rawDatos.length} reg | Rutas: ${mapaRutas.size} estilos. Revise consola F12.`,
+          'error'
+        );
+      } else {
+        const proyMsg = wb.proyeccion ? ' · Proyección cargada' : '';
+        mostrarMensajeUpload(`Procesado — ${nOrd} orden(es) | ${nLin} líneas${proyMsg}`, 'success');
+      }
+      console.log('===== FIN BALANCEO CANTOS =====');
+    } catch(err) {
+      console.error(err);
+      mostrarMensajeUpload('Error: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.classList.remove('processing');
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>BALANCEAR`;
+      }
+    }
+  }, 50);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FILTROS
+   ═══════════════════════════════════════════════════════════ */
+function aplicarFiltros() {
+  const fecha     = document.getElementById('filtroFecha').value;
+  const estiloTxt = (document.getElementById('filtroEstilo').value || '').trim().toLowerCase();
+  const ordenTxt  = (document.getElementById('filtroOrden').value  || '').trim().toLowerCase();
+  const src = getEstadoActivo();
+
+  src.datosFiltrados = src.datosFinales.filter(r => {
+    if (lineasSeleccionadas.size > 0 && !lineasSeleccionadas.has(r.linea)) return false;
+    if (fecha && fechaAInput(r.fecha) !== fecha) return false;
+    if (estiloTxt && !r.estilo.toLowerCase().includes(estiloTxt)) return false;
+    if (ordenTxt  && !r.orden.toLowerCase().includes(ordenTxt))   return false;
+    return true;
+  });
+
+  const { filas, fechas } = generarResumen(src.datosFiltrados);
+  src.resumenFilas   = filas;
+  src.fechasColumnas = fechas;
+
+  renderizarTabla();
+  renderizarTarjetas();
+}
+
+function rellenarPanelLineas(lineas) {
+  const lista = document.getElementById('lineaDropdownList');
+  if (!lista) return;
+  lista.innerHTML = '';
+  lineas.forEach(linea => {
+    const item = document.createElement('div');
+    item.className = 'linea-check-item';
+    const cb  = document.createElement('input');
+    cb.type   = 'checkbox'; cb.id = 'cbL_' + linea.replace(/\W/g,'_');
+    cb.checked = true; cb.dataset.linea = linea;
+    const lbl = document.createElement('label');
+    lbl.htmlFor = cb.id; lbl.textContent = linea;
+    cb.addEventListener('change', () => { actualizarLineasSeleccionadas(); aplicarFiltros(); });
+    item.appendChild(cb); item.appendChild(lbl);
+    lista.appendChild(item);
+  });
+  actualizarLineasSeleccionadas();
+  actualizarEtiquetaLineas();
+}
+
+function actualizarLineasSeleccionadas() {
+  const cbs = document.querySelectorAll('#lineaDropdownList input[type="checkbox"]');
+  lineasSeleccionadas = new Set();
+  cbs.forEach(cb => { if (cb.checked) lineasSeleccionadas.add(cb.dataset.linea); });
+  actualizarEtiquetaLineas();
+  actualizarDatalistsFiltros();
+}
+
+function actualizarEtiquetaLineas() {
+  const label = document.getElementById('lineaDropdownLabel');
+  if (!label) return;
+  const cbs = document.querySelectorAll('#lineaDropdownList input[type="checkbox"]');
+  const total = cbs.length;
+  const activas = [...cbs].filter(c => c.checked).length;
+  if (activas === 0)           label.textContent = 'Ninguna línea';
+  else if (activas === total)  label.textContent = 'Todas las líneas';
+  else                         label.textContent = `${activas} de ${total} líneas`;
+}
+
+function actualizarDatalistsFiltros() {
+  const src = getEstadoActivo();
+  const datos = lineasSeleccionadas.size > 0
+    ? src.datosFinales.filter(r => lineasSeleccionadas.has(r.linea))
+    : src.datosFinales;
+  const estilos = [...new Set(datos.map(r => r.estilo))].filter(Boolean).sort();
+  const ordenes = [...new Set(datos.map(r => r.orden))].filter(Boolean).sort();
+  rellenarDatalist('filtroEstiloList', estilos);
+  rellenarDatalist('filtroOrdenList',  ordenes);
+}
+
+function rellenarDatalist(id, valores) {
+  const dl = document.getElementById(id); if (!dl) return;
+  dl.innerHTML = '';
+  valores.forEach(v => { const o = document.createElement('option'); o.value = v; dl.appendChild(o); });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDERIZAR TABLA
+   ═══════════════════════════════════════════════════════════ */
+function ajustarStickyThead() {
+  const thead = document.getElementById('tablaHead'); if (!thead) return;
+  const row1  = thead.querySelector('tr:nth-child(1)'); if (!row1) return;
+  const h     = row1.getBoundingClientRect().height;
+  thead.querySelectorAll('tr:nth-child(2) th').forEach(th => { th.style.top = h + 'px'; });
+}
+
+function renderizarTabla() {
+  const thead  = document.getElementById('tablaHead');
+  const tbody  = document.getElementById('tablaCuerpo');
+  const conteo = document.getElementById('conteoTabla');
+  const src    = getEstadoActivo();
+  const filas  = src.resumenFilas;
+  const fechas = src.fechasColumnas;
+
+  if (conteo) conteo.textContent = filas.length;
+
+  if (!filas.length) {
+    thead.innerHTML = '';
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" rx="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 16h10M11 11h10M11 21h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <p>No hay datos para mostrar. Cargue los archivos y presione BALANCEAR.</p>
+    </div></td></tr>`;
+    const secR = document.getElementById('resumenLineaSection'); if(secR) secR.style.display='none';
+    return;
+  }
+
+  const thFijos = `<th>Línea</th><th>Orden</th><th>Estilo</th><th>Cliente</th><th>Ex Date</th><th class="num">Cant. Orden</th><th class="num">Total Plan.</th>`;
+  const N_FIJOS = 7;
+
+  const thDias = fechas.map(iso => {
+    const [yyyy, mm, dd] = iso.split('-');
+    const dObj   = new Date(+yyyy, +mm-1, +dd);
+    const diaN   = isNaN(dObj.getTime()) ? -1 : dObj.getDay();
+    const nombre = diaN >= 0 ? DIAS_ES[diaN] : '';
+    const esSab  = diaN === 6;
+    const cls    = esSab ? 'th-dia th-dia-sab' : 'th-dia';
+    const hVal   = diaN >= 0 ? getHorasConfig(diaN) : '';
+    const hInp   = diaN >= 0
+      ? `<input type="number" class="th-horas-input" data-iso="${iso}" data-dia="${diaN}" value="${hVal}" min="0" max="24" step="0.5" title="Horas ${nombre}" />`
+      : '';
+    return `<th class="${cls}"><span class="th-dia-nombre">${nombre}</span><span class="th-dia-fecha">${dd}/${mm}</span>${hInp}</th>`;
+  }).join('');
+
+  // Sumatoria HC por día
+  const hcPorDia = {};
+  fechas.forEach(iso => { hcPorDia[iso] = 0; });
+  filas.forEach(g => {
+    fechas.forEach(iso => {
+      const d = g.dias[iso];
+      if (d) hcPorDia[iso] += d.hcTotalDia;
+    });
+  });
+
+  // HC promedio diario = promedio simple de los valores > 0 de la fila HC/DÍA
+  // CAMBIO 1: usar exactamente los valores de hcPorDia que son > 0
+  const valoresDia = fechas.map(iso => hcPorDia[iso]).filter(v => v > 0);
+  const hcPromedioDiario = valoresDia.length ? valoresDia.reduce((a,b)=>a+b,0) / valoresDia.length : 0;
+
+  const hcTotalGeneral = fechas.reduce((s, iso) => s + hcPorDia[iso], 0);
+
+  const thResumenDias = fechas.map(iso => {
+    const [y,m,d] = iso.split('-');
+    const esSab = !isNaN(new Date(+y,+m-1,+d).getTime()) && new Date(+y,+m-1,+d).getDay() === 6;
+    const cls = esSab ? 'th-hc-dia hc-sab' : 'th-hc-dia';
+    return `<th class="${cls}">${hcPorDia[iso] > 0 ? hcPorDia[iso].toFixed(1) : '—'}</th>`;
+  }).join('');
+
+  thead.innerHTML =
+    `<tr class="tr-hc-resumen"><th class="th-hc-label" colspan="${N_FIJOS}">HC / DÍA</th>${thResumenDias}<th class="th-hc-total">${hcTotalGeneral > 0 ? hcTotalGeneral.toFixed(1) : '—'}</th></tr>` +
+    `<tr>${thFijos}${thDias}<th class="th-hctotal">HC Total</th></tr>`;
+
+  requestAnimationFrame(ajustarStickyThead);
+
+  // Guardar hcPromedioDiario para renderizarTarjetas
+  src._hcPromedioDiario = hcPromedioDiario;
+
+  tbody.innerHTML = filas.map((g, gi) => {
+    const color = colorLinea(g.linea);
+    const tdFijos = `
+      <td><span class="td-linea"><span class="linea-dot" style="background:${color}"></span>${esc(g.linea)}</span></td>
+      <td><strong>${esc(g.orden)}</strong></td>
+      <td>${esc(g.estilo)}</td>
+      <td>${esc(g.cliente)}</td>
+      <td style="font-family:var(--font-mono);font-size:.75rem;">${esc(g.exDate)}</td>
+      <td class="num">${g.cantOrden > 0 ? g.cantOrden.toLocaleString() : '—'}</td>
+      <td class="num">${g.totalPlan > 0  ? g.totalPlan.toLocaleString()  : '—'}</td>`;
+
+    const tdDias = fechas.map(iso => {
+      const [y,m,d] = iso.split('-');
+      const dObjC  = new Date(+y, +m-1, +d);
+      const esSab  = !isNaN(dObjC.getTime()) && dObjC.getDay() === 6;
+      const sabCls = esSab ? ' td-dia-sab' : '';
+      const dia    = g.dias[iso];
+
+      if (!dia || dia.hcTotalDia === 0) {
+        return `<td class="td-dia td-dia-vacia${sabCls}" data-gi="${gi}" data-iso="${iso}">—</td>`;
+      }
+      const detJson = esc(JSON.stringify(dia.detalleOperaciones));
+      return `
+        <td class="td-dia${sabCls}"
+          data-gi="${gi}" data-iso="${iso}"
+          data-fecha="${esc(dia.fecha)}"
+          data-orden="${esc(g.orden)}"
+          data-estilo="${esc(g.estilo)}"
+          data-det="${detJson}">
+          <div class="celda-dia-inner">
+            <div class="celda-u-row">
+              <input class="celda-u-input" type="number" min="0"
+                value="${dia.unidades}" data-gi="${gi}" data-iso="${iso}" title="Editar unidades" />
+              <span class="celda-u-suffix">u</span>
+            </div>
+            <span class="celda-dia-hc" id="hcdia-${gi}-${iso}">HC: ${dia.hcTotalDia.toFixed(1)}</span>
+          </div>
+        </td>`;
+    }).join('');
+
+    // HC TOTAL por fila = promedio de días con carga de esa fila
+    const diasConCarga = Object.values(g.dias).filter(d => d.hcTotalDia > 0);
+    const hcFilaVisible = diasConCarga.length
+      ? diasConCarga.reduce((s,d)=>s+d.hcTotalDia,0) / diasConCarga.length
+      : 0;
+
+    return `<tr>${tdFijos}${tdDias}<td class="td-hctotal" id="hctotal-${gi}">${hcFilaVisible.toFixed(2)}</td></tr>`;
+  }).join('');
+
+  renderizarResumenLinea();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TARJETAS RESUMEN
+   HC promedio diario = promedio de los valores de la fila HC/DÍA > 0
+   ═══════════════════════════════════════════════════════════ */
+function renderizarTarjetas() {
+  const src   = getEstadoActivo();
+  const datos = src.datosFiltrados;
+  const ordenes = new Set(datos.map(r => r.orden)).size;
+  const lineas  = new Set(datos.map(r => r.linea)).size;
+
+  const vistas = new Set();
+  let totalUnidades = 0;
+  datos.forEach(r => {
+    const k = `${r.fecha}|${r.linea}|${r.orden}|${r.estilo}`;
+    if (!vistas.has(k)) { vistas.add(k); totalUnidades += r.unidades; }
+  });
+
+  // HC promedio diario: viene calculado en renderizarTabla desde los valores de la fila HC/DÍA
+  const hcProm = src._hcPromedioDiario !== undefined ? src._hcPromedioDiario : 0;
+
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('statOrdenes',  ordenes);
+  set('statUnidades', totalUnidades.toLocaleString());
+  set('statHC',       hcProm.toFixed(2));
+  set('statLineas',   lineas);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESUMEN POR LÍNEA
+   ═══════════════════════════════════════════════════════════ */
+
+function renderizarResumenLinea() {
+  const src    = getEstadoActivo();
+  const datos  = src.datosFiltrados;
+  const fechas = src.fechasColumnas;
+  const sec    = document.getElementById('resumenLineaSection');
+  const thead  = document.getElementById('resumenLineaHead');
+  const tbody  = document.getElementById('resumenLineaBody');
+  if (!sec || !thead || !tbody) return;
+
+  if (!datos.length || !fechas.length) {
+    sec.style.display = 'none';
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    return;
+  }
+  sec.style.display = '';
+
+  // Calcular HC por operación × día usando los datos visibles/activos
+  const operaciones = [...new Set(datos.map(r => r.op).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const hcOpDia = {};
+  const hcDiaTotal = {};
+  fechas.forEach(iso => { hcDiaTotal[iso] = 0; });
+  operaciones.forEach(op => {
+    hcOpDia[op] = {};
+    fechas.forEach(iso => { hcOpDia[op][iso] = 0; });
+  });
+
+  datos.forEach(r => {
+    const op = r.op;
+    const iso = fechaISO(r.fecha);
+    if (!op || !hcOpDia[op] || !Object.prototype.hasOwnProperty.call(hcOpDia[op], iso)) return;
+    hcOpDia[op][iso] += r.hc;
+    hcDiaTotal[iso] += r.hc;
+  });
+
+  // THEAD sin columna de total a la derecha
+  let thH = '<tr><th>Operación</th>';
+  fechas.forEach(iso => {
+    const [y,m,d] = iso.split('-');
+    const dObj = new Date(+y, +m - 1, +d);
+    const diaN = isNaN(dObj.getTime()) ? -1 : dObj.getDay();
+    const nombre = diaN >= 0 ? DIAS_ES[diaN] : '';
+    const esSab = diaN === 6;
+    const cls = esSab ? 'th-rdia th-rdia-sab' : 'th-rdia';
+    thH += `<th class="${cls}"><span class="rh-nombre">${nombre}</span><span class="rh-fecha">${d}/${m}</span></th>`;
+  });
+  thH += '</tr>';
+  thead.innerHTML = thH;
+
+  // TBODY — una fila por operación
+  let tbH = '';
+  operaciones.forEach(op => {
+    let tdsDia = '';
+    fechas.forEach(iso => {
+      const v = hcOpDia[op][iso] || 0;
+      const [y,m,d2] = iso.split('-');
+      const dObj = new Date(+y, +m - 1, +d2);
+      const esSab = !isNaN(dObj.getTime()) && dObj.getDay() === 6;
+      const clsSab = esSab ? ' td-rval-sab' : '';
+      const clsHas = v > 0 ? ' td-rval-has' : '';
+      tdsDia += `<td class="td-rval${clsSab}${clsHas}">${v > 0 ? v.toFixed(2) : '—'}</td>`;
+    });
+
+    tbH += `<tr>
+      <td><strong>${esc(op)}</strong></td>
+      ${tdsDia}
+    </tr>`;
+  });
+
+  // Fila TOTAL por día
+  let tdsTot = '';
+  fechas.forEach(iso => {
+    const v = hcDiaTotal[iso] || 0;
+    const [y,m,d2] = iso.split('-');
+    const dObj = new Date(+y, +m - 1, +d2);
+    const esSab = !isNaN(dObj.getTime()) && dObj.getDay() === 6;
+    const clsSab = esSab ? ' td-rval-sab' : '';
+    tdsTot += `<td class="td-rval${clsSab}">${v > 0 ? v.toFixed(2) : '—'}</td>`;
+  });
+
+  tbH += `<tr class="tr-resumen-total">
+    <td><strong>TOTAL</strong></td>
+    ${tdsTot}
+  </tr>`;
+
+  tbody.innerHTML = tbH;
+}
+
+
+document.getElementById('tablaCuerpo').addEventListener('change', function(e) {
+  if (!e.target.classList.contains('celda-u-input')) return;
+  const gi      = parseInt(e.target.getAttribute('data-gi'));
+  const iso     = e.target.getAttribute('data-iso');
+  const nuevasU = Math.max(0, parseFloat(e.target.value) || 0);
+  const src = getEstadoActivo();
+  const grupo = src.resumenFilas[gi]; if (!grupo) return;
+  const dia   = grupo.dias[iso];      if (!dia)   return;
+
+  dia.unidades = nuevasU;
+  let nuevoHCDia = 0;
+  dia.detalleOperaciones = dia.detalleOperaciones.map(op => {
+    const hc = calcHC(op._samRaw, nuevasU, op._horas, op._efRaw);
+    nuevoHCDia += hc;
+    return { ...op, hc, unidades: nuevasU };
+  });
+  dia.hcTotalDia = nuevoHCDia;
+
+  const hcDiaEl = document.getElementById(`hcdia-${gi}-${iso}`);
+  if (hcDiaEl) hcDiaEl.textContent = `HC: ${nuevoHCDia.toFixed(1)}`;
+
+  // Recalcular HC fila visible
+  const diasCarga = Object.values(grupo.dias).filter(d => d.hcTotalDia > 0);
+  const hcFilaVis = diasCarga.length ? diasCarga.reduce((s,d)=>s+d.hcTotalDia,0)/diasCarga.length : 0;
+  const hcTotalEl = document.getElementById(`hctotal-${gi}`);
+  if (hcTotalEl) hcTotalEl.textContent = hcFilaVis.toFixed(2);
+
+  const cel = document.querySelector(`.td-dia[data-gi="${gi}"][data-iso="${iso}"]`);
+  if (cel) cel.setAttribute('data-det', esc(JSON.stringify(dia.detalleOperaciones)));
+
+  // Re-renderizar para actualizar fila HC/DÍA y tarjeta
+  renderizarTabla();
+  renderizarTarjetas();
+});
+
+document.getElementById('tablaCuerpo').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.classList.contains('celda-u-input')) e.target.blur();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   TOOLTIP
+   ═══════════════════════════════════════════════════════════ */
+const tooltip = document.getElementById('tooltipDetalle');
+let tooltipTimeout = null;
+let mouseEnCelda = false, mouseEnTooltip = false, tooltipCeldaActual = null;
+
+function mostrarTooltip(e, cel) {
+  clearTimeout(tooltipTimeout);
+  const fecha   = cel.getAttribute('data-fecha')  || '';
+  const orden   = cel.getAttribute('data-orden')  || '';
+  const estilo  = cel.getAttribute('data-estilo') || '';
+  const detRaw  = cel.getAttribute('data-det')    || '[]';
+  let ops = [];
+  try {
+    ops = JSON.parse(detRaw.replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
+  } catch(ex) { return; }
+  if (!ops.length) return;
+
+  const nombreDia = nombreDiaDesdeFecha(fecha);
+  const fc = fecha.length > 5 ? fecha.substring(0,5) : fecha;
+
+  const filas = ops.map(op =>
+    `<tr>
+      <td>${esc(op.operacion)}</td>
+      <td class="r">${Number(op._samRaw || op.sam).toFixed(3)}</td>
+      <td class="r"><span class="tt-ef-val">${((op._efRaw || op.eficiencia) * 100).toFixed(1)}%</span></td>
+      <td class="r"><span class="tooltip-hc-val">${Number(op.hc).toFixed(3)}</span></td>
+    </tr>`
+  ).join('');
+
+  const hcTotal = ops.reduce((s, op) => s + Number(op.hc), 0);
+  const nOps = ops.length;
+  const maxH = nOps <= 4 ? 240 : nOps <= 8 ? 320 : 440;
+  tooltip.style.setProperty('--tt-maxh', maxH + 'px');
+
+  tooltip.innerHTML = `
+    <div class="tooltip-header">
+      <div class="tooltip-title">${esc(orden)} — ${esc(estilo)}</div>
+      <div class="tooltip-sub">${nombreDia} ${fc} · ${nOps} operación${nOps !== 1 ? 'es' : ''} PRE-ENTINTADO</div>
+    </div>
+    <div class="tooltip-body">
+      <table class="tooltip-table">
+        <thead><tr>
+          <th>Operación</th>
+          <th class="r">SAM</th>
+          <th class="r">Efic.</th>
+          <th class="r">HC</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+    <div class="tooltip-footer">
+      <span class="tooltip-footer-label">HC total del día</span>
+      <span class="tooltip-footer-val">${hcTotal.toFixed(3)}</span>
+    </div>`;
+
+  posicionarTooltip(e);
+  tooltip.style.display = 'flex';
+}
+
+function posicionarTooltip(e) {
+  const margin = 12;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  tooltip.style.display = 'flex';
+  const tw = tooltip.offsetWidth || 380;
+  const th = tooltip.offsetHeight || 280;
+  let x = e.clientX + margin, y = e.clientY + margin;
+  if (x + tw > vw - margin) x = e.clientX - tw - margin;
+  if (y + th > vh - margin) y = e.clientY - th - margin;
+  if (x < margin) x = margin; if (y < margin) y = margin;
+  tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+}
+
+function ocultarTooltipSiLibre() {
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = setTimeout(() => {
+    if (!mouseEnCelda && !mouseEnTooltip) { tooltip.style.display = 'none'; tooltipCeldaActual = null; }
+  }, 120);
+}
+
+document.getElementById('tablaCuerpo').addEventListener('mouseover', function(e) {
+  const cel = e.target.closest('.td-dia:not(.td-dia-vacia)'); if (!cel) return;
+  clearTimeout(tooltipTimeout); mouseEnCelda = true;
+  if (tooltipCeldaActual !== cel) { tooltipCeldaActual = cel; mostrarTooltip(e, cel); }
+});
+document.getElementById('tablaCuerpo').addEventListener('mousemove', function(e) {
+  const cel = e.target.closest('.td-dia:not(.td-dia-vacia)');
+  if (cel && tooltip.style.display !== 'none') posicionarTooltip(e);
+});
+document.getElementById('tablaCuerpo').addEventListener('mouseout', function(e) {
+  const cel = e.target.closest('.td-dia:not(.td-dia-vacia)'); if (!cel) return;
+  if (cel.contains(e.relatedTarget) || tooltip.contains(e.relatedTarget)) return;
+  mouseEnCelda = false; ocultarTooltipSiLibre();
+});
+tooltip.addEventListener('mouseenter', () => { clearTimeout(tooltipTimeout); mouseEnTooltip = true; });
+tooltip.addEventListener('mouseleave', () => { mouseEnTooltip = false; ocultarTooltipSiLibre(); });
+document.getElementById('tablaScrollContainer').addEventListener('mouseleave', function(e) {
+  if (tooltip.contains(e.relatedTarget)) return;
+  mouseEnCelda = false; mouseEnTooltip = false;
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = setTimeout(() => { if (!mouseEnTooltip) { tooltip.style.display = 'none'; tooltipCeldaActual = null; } }, 100);
+});
+document.getElementById('tablaCuerpo').addEventListener('focusin', function(e) {
+  if (e.target.classList.contains('celda-u-input')) { mouseEnCelda = false; mouseEnTooltip = false; tooltip.style.display = 'none'; tooltipCeldaActual = null; }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   INPUTS HORAS EN COLUMNAS
+   ═══════════════════════════════════════════════════════════ */
+document.getElementById('tablaHead').addEventListener('change', function(e) {
+  const inp = e.target.closest('.th-horas-input'); if (!inp) return;
+  const dia = parseInt(inp.dataset.dia);
+  const v   = parseFloat(inp.value);
+  if (isNaN(dia) || isNaN(v) || v < 0) return;
+  horasConfig[dia] = v;
+  actualizarTotalHorasSemana();
+  recalcularConNuevasHoras();
+});
+
+document.getElementById('horasTotalSemana').addEventListener('change', function() {
+  const nuevoTotal = parseFloat(this.value);
+  if (isNaN(nuevoTotal) || nuevoTotal <= 0) return;
+  const PESOS = { 1:9, 2:9, 3:9, 4:9, 5:8, 6:6 };
+  const totalPesos = Object.values(PESOS).reduce((s,v)=>s+v, 0);
+  Object.entries(PESOS).forEach(([dia, peso]) => {
+    horasConfig[parseInt(dia)] = Math.max(0, Math.round((peso / totalPesos) * nuevoTotal * 2) / 2);
+  });
+  actualizarTotalHorasSemana();
+  [1,2,3,4,5,6].forEach(dia => {
+    document.querySelectorAll(`.th-horas-input[data-dia="${dia}"]`).forEach(ci => { ci.value = getHorasConfig(dia); });
+  });
+  recalcularConNuevasHoras();
+});
+
+function recalcularConNuevasHoras() {
+  // Recalcular en ambos estados
+  [estadoPrograma, estadoProyeccion].forEach(est => {
+    if (!est.datosFinales || !est.datosFinales.length) return;
+    est.datosFinales.forEach(r => {
+      const h = horasPorFecha(r.fecha);
+      r.horas = h;
+      r.hc    = calcHC(r.sam, r.unidades, h, r.ef);
+    });
+  });
+  aplicarFiltros();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DROPDOWN LÍNEAS — eventos
+   ═══════════════════════════════════════════════════════════ */
+(function initLineaDropdown() {
+  const btn   = document.getElementById('lineaDropdownBtn');
+  const panel = document.getElementById('lineaDropdownPanel');
+  const selAll  = document.getElementById('lineaSelAll');
+  const selNone = document.getElementById('lineaSelNone');
+  if (!btn || !panel) return;
+  btn.addEventListener('click', e => { e.stopPropagation(); panel.classList.toggle('open'); });
+  document.addEventListener('click', e => {
+    if (!btn.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open');
+  });
+  if (selAll) selAll.addEventListener('click', () => {
+    document.querySelectorAll('#lineaDropdownList input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+    actualizarLineasSeleccionadas(); aplicarFiltros();
+  });
+  if (selNone) selNone.addEventListener('click', () => {
+    document.querySelectorAll('#lineaDropdownList input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    actualizarLineasSeleccionadas(); aplicarFiltros();
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORTAR EXCEL
+   Hoja Resumen PRIMERO: Línea + HC por día
+   Hojas por línea: Operación × Día (matriz HC)
+   ═══════════════════════════════════════════════════════════ */
+const DIAS_CORTOS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+function nombreEncabDia(iso) {
+  const [yyyy,mm,dd] = iso.split('-');
+  const d = new Date(+yyyy, +mm-1, +dd);
+  if (isNaN(d.getTime())) return iso;
+  return DIAS_CORTOS[d.getDay()] + ' ' + dd + '/' + mm;
+}
+function xlAddr(c, r) {
+  if (c < 26) return String.fromCharCode(65+c)+(r+1);
+  return String.fromCharCode(64+Math.floor(c/26))+String.fromCharCode(65+(c%26))+(r+1);
+}
+function setWidths(ws, ws_arr) { ws['!cols'] = ws_arr.map(w => ({wch:w})); }
+
+function formatSheet(ws, nRows, nCols, iHdr, iTotal) {
+  const HDR  = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1F3864'}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}, border:{top:{style:'thin',color:{rgb:'4472C4'}},bottom:{style:'thin',color:{rgb:'4472C4'}},left:{style:'thin',color:{rgb:'4472C4'}},right:{style:'thin',color:{rgb:'4472C4'}}} };
+  const DNUM = { font:{color:{rgb:'000000'}}, alignment:{horizontal:'right',vertical:'center'}, numFmt:'0.00', border:{top:{style:'thin',color:{rgb:'BFBFBF'}},bottom:{style:'thin',color:{rgb:'BFBFBF'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+  const DTXT = { font:{color:{rgb:'000000'}}, alignment:{horizontal:'left',vertical:'center',wrapText:true}, border:{top:{style:'thin',color:{rgb:'BFBFBF'}},bottom:{style:'thin',color:{rgb:'BFBFBF'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+  const TNUM = { font:{bold:true,color:{rgb:'000000'}}, fill:{fgColor:{rgb:'D6E4F0'}}, alignment:{horizontal:'right',vertical:'center'}, numFmt:'0.00', border:{top:{style:'medium',color:{rgb:'4472C4'}},bottom:{style:'medium',color:{rgb:'4472C4'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+  const TTXT = { font:{bold:true,color:{rgb:'000000'}}, fill:{fgColor:{rgb:'D6E4F0'}}, alignment:{horizontal:'left',vertical:'center'}, border:{top:{style:'medium',color:{rgb:'4472C4'}},bottom:{style:'medium',color:{rgb:'4472C4'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+  for (let c=0;c<nCols;c++){const ref=xlAddr(c,iHdr);if(ws[ref])ws[ref].s=HDR;}
+  for (let r=iHdr+1;r<nRows;r++){
+    const isTotal=(r===iTotal);
+    for(let c=0;c<nCols;c++){const ref=xlAddr(c,r);if(!ws[ref])continue;if(isTotal)ws[ref].s=(c<=0)?TTXT:TNUM;else ws[ref].s=(c<=0)?DTXT:DNUM;}
+  }
+}
+
+document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
+function exportarExcel() {
+  const src = getEstadoActivo();
+  if (!src.datosFinales || !src.datosFinales.length) {
+    alert('No hay datos balanceados para exportar.');
+    return;
+  }
+
+  const wb_xl = XLSX.utils.book_new();
+
+  // Datos actuales (filtrados si hay filtros, sino todos)
+  const srcData = src.datosFiltrados.length ? src.datosFiltrados : src.datosFinales;
+
+  // Fechas globales ordenadas
+  const setF   = new Set(srcData.map(r => fechaISO(r.fecha)));
+  const fechas = [...setF].sort();
+
+  // Líneas ordenadas
+  const todasLineas = [...new Set(srcData.map(r => r.linea))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+
+  // Pre-calcular HC por linea+día (para hoja resumen)
+  const hcLinDia = new Map();
+  srcData.forEach(r => {
+    const k = r.linea + '|' + fechaISO(r.fecha);
+    hcLinDia.set(k, (hcLinDia.get(k) || 0) + r.hc);
+  });
+
+  /* ════ HOJA RESUMEN (primera) ════
+     Columnas: Línea | HC día1 | HC día2 | ... | HC Total
+  */
+  const resHdr = ['Línea', ...fechas.map(nombreEncabDia), 'HC Total'];
+  const resData = [resHdr];
+  todasLineas.forEach(linea => {
+    const row = [linea];
+    let tot = 0;
+    fechas.forEach(iso => {
+      const v = hcLinDia.get(linea + '|' + iso) || 0;
+      row.push(v > 0 ? parseFloat(v.toFixed(2)) : '');
+      tot += v;
+    });
+    row.push(parseFloat(tot.toFixed(2)));
+    resData.push(row);
+  });
+  const totFila = ['TOTAL'];
+  let gtot = 0;
+  fechas.forEach(iso => {
+    const v = todasLineas.reduce((s,l) => s + (hcLinDia.get(l+'|'+iso)||0), 0);
+    totFila.push(v > 0 ? parseFloat(v.toFixed(2)) : '');
+    gtot += v;
+  });
+  totFila.push(parseFloat(gtot.toFixed(2)));
+  resData.push(totFila);
+
+  const wsRes = XLSX.utils.aoa_to_sheet(resData);
+  setWidths(wsRes, [30, ...fechas.map(()=>14), 12]);
+  formatSheet(wsRes, resData.length, resHdr.length, 0, resData.length-1);
+  XLSX.utils.book_append_sheet(wb_xl, wsRes, 'Resumen');
+
+  /* ════ HOJAS POR LÍNEA ════
+     Estructura: Operación × Día (matriz HC)
+     Filas = operaciones válidas con carga en esa línea
+     Columnas = días con carga
+     Última fila = SUMA por día
+  */
+  todasLineas.forEach(linea => {
+    const datosLinea = srcData.filter(r => r.linea === linea);
+    if (!datosLinea.length) return;
+
+    // Fechas de esta línea
+    const setFL = new Set(datosLinea.map(r => fechaISO(r.fecha)));
+    const fechasL = [...setFL].sort();
+
+    // Operaciones presentes en esta línea (solo las válidas)
+    const opsPresentes = [...new Set(datosLinea.map(r => r.op))].sort();
+
+    // Construir mapa: op → iso → suma HC
+    const mapaOpDia = new Map(); // op → Map(iso → hc)
+    datosLinea.forEach(r => {
+      if (!mapaOpDia.has(r.op)) mapaOpDia.set(r.op, new Map());
+      const m = mapaOpDia.get(r.op);
+      m.set(fechaISO(r.fecha), (m.get(fechaISO(r.fecha)) || 0) + r.hc);
+    });
+
+    // Encabezado: Operación | HC Lun | HC Mar | ... | HC Total op
+    const hdr = ['Operación', ...fechasL.map(nombreEncabDia), 'HC Total Operación'];
+    const rows = [hdr];
+
+    // Una fila por operación
+    opsPresentes.forEach(op => {
+      const m = mapaOpDia.get(op) || new Map();
+      const row = [op];
+      let totOp = 0;
+      fechasL.forEach(iso => {
+        const v = m.get(iso) || 0;
+        row.push(v > 0 ? parseFloat(v.toFixed(4)) : '');
+        totOp += v;
+      });
+      row.push(parseFloat(totOp.toFixed(4)));
+      rows.push(row);
+    });
+
+    // Fila SUMA por día
+    const sumaRow = ['SUMA'];
+    let sumaTotal = 0;
+    fechasL.forEach(iso => {
+      const v = opsPresentes.reduce((s, op) => {
+        const m = mapaOpDia.get(op);
+        return s + (m ? (m.get(iso) || 0) : 0);
+      }, 0);
+      sumaRow.push(v > 0 ? parseFloat(v.toFixed(4)) : '');
+      sumaTotal += v;
+    });
+    sumaRow.push(parseFloat(sumaTotal.toFixed(4)));
+    rows.push(sumaRow);
+
+    const wsL = XLSX.utils.aoa_to_sheet(rows);
+    const anchos = [30, ...fechasL.map(()=>14), 18];
+    setWidths(wsL, anchos);
+    formatSheet(wsL, rows.length, hdr.length, 0, rows.length-1);
+    XLSX.utils.book_append_sheet(wb_xl, wsL, linea.replace(/[\/\\?\*\[\]]/g,'_').substring(0,31) || 'Linea');
+  });
+
+  const ts = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const sufijo = fuenteActiva === 'proyeccion' ? '_Proyeccion' : '_Programa';
+  XLSX.writeFile(wb_xl, `Balance_Cantos${sufijo}_${ts}.xlsx`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARGA DE ARCHIVOS
+   ═══════════════════════════════════════════════════════════ */
+function leerExcel(input, onLoad) {
+  const archivo = input.files[0]; if (!archivo) return;
+  const reader  = new FileReader();
+  reader.onload = e => {
+    try { onLoad(XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: false }), archivo.name); }
+    catch(err) { console.error(err); mostrarMensajeUpload('Error al leer: ' + archivo.name, 'error'); }
+  };
+  reader.readAsArrayBuffer(archivo);
+}
+function marcarCargado(stId, fnId, cardId, nombre) {
+  const s=document.getElementById(stId);const f=document.getElementById(fnId);const c=document.getElementById(cardId);
+  if(s){s.textContent='Archivo cargado';s.className='upload-card-status loaded-ok';}
+  if(f)f.textContent=nombre; if(c)c.classList.add('loaded');
+}
+function marcarPendiente(stId, fnId, cardId, textoDefault) {
+  const s=document.getElementById(stId);const f=document.getElementById(fnId);const c=document.getElementById(cardId);
+  if(s){s.textContent=textoDefault||'Pendiente';s.className='upload-card-status pending';}
+  if(f)f.textContent=''; if(c)c.classList.remove('loaded');
+}
+function mostrarMensajeUpload(texto, tipo) {
+  const el=document.getElementById('uploadMessage');const txt=document.getElementById('uploadMessageText');if(!el||!txt)return;
+  const mapa={success:'upload-success',error:'upload-error',warn:'upload-warn',wait:'upload-wait'};
+  el.className='upload-message '+(mapa[tipo]||'upload-wait');txt.textContent=texto;
+}
+
+document.getElementById('inputPrograma').addEventListener('change', function() {
+  leerExcel(this, (workbook, nombre) => {
+    wb.programa = workbook;
+    marcarCargado('statusPrograma','filenamePrograma','uploadCardPrograma',nombre);
+    actualizarMensaje();
+  });
+});
+document.getElementById('inputRutas').addEventListener('change', function() {
+  leerExcel(this, (workbook, nombre) => {
+    wb.rutas = workbook;
+    marcarCargado('statusRutas','filenameRutas','uploadCardRutas',nombre);
+    actualizarMensaje();
+  });
+});
+document.getElementById('inputProyeccion').addEventListener('change', function() {
+  leerExcel(this, (workbook, nombre) => {
+    wb.proyeccion = workbook;
+    marcarCargado('statusProyeccion','filenameProyeccion','uploadCardProyeccion',nombre);
+    actualizarMensaje();
+  });
+});
+
+function actualizarMensaje() {
+  const n = (wb.programa?1:0)+(wb.rutas?1:0);
+  const tieneProyeccion = !!wb.proyeccion;
+  if (n === 2) {
+    const msg = tieneProyeccion
+      ? 'Programa + Rutas + Proyección cargados — presione BALANCEAR'
+      : 'Programa y Rutas cargados — presione BALANCEAR';
+    mostrarMensajeUpload(msg, 'wait');
+  } else {
+    const f = [];
+    if (!wb.programa) f.push('Programa de producción');
+    if (!wb.rutas)    f.push('Rutas Activas');
+    mostrarMensajeUpload(`${n}/2 archivos obligatorios — Falta: ${f.join(', ')}`, 'wait');
+  }
+}
+
+/* LIMPIAR */
+document.getElementById('btnLimpiarArchivos').addEventListener('click', () => {
+  wb.programa = null; wb.rutas = null; wb.proyeccion = null;
+  // Limpiar ambos estados
+  [estadoPrograma, estadoProyeccion].forEach(est => {
+    est.rawDatos=[]; est.datosFinales=[]; est.datosFiltrados=[]; est.resumenFilas=[]; est.fechasColumnas=[];
+    est._hcPromedioDiario = 0;
+  });
+  mapaRutas = new Map();
+  lineasSeleccionadas = new Set();
+  fuenteActiva = 'programa';
+
+  marcarPendiente('statusPrograma','filenamePrograma','uploadCardPrograma','Pendiente');
+  marcarPendiente('statusRutas','filenameRutas','uploadCardRutas','Pendiente');
+  marcarPendiente('statusProyeccion','filenameProyeccion','uploadCardProyeccion','Sin cargar');
+  ['inputPrograma','inputRutas','inputProyeccion'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
+  // Reset tabs
+  document.getElementById('tabPrograma').classList.add('fuente-tab-active');
+  const tabProy = document.getElementById('tabProyeccion');
+  if (tabProy) { tabProy.classList.remove('fuente-tab-active'); tabProy.disabled = true; }
+  const titulo = document.getElementById('tablaTitulo');
+  if (titulo) titulo.textContent = 'Programa de producción — PRE-ENTINTADO';
+
+  const ll=document.getElementById('lineaDropdownList');if(ll)ll.innerHTML='';
+  actualizarEtiquetaLineas();
+  rellenarDatalist('filtroEstiloList',[]);rellenarDatalist('filtroOrdenList',[]);
+  document.getElementById('filtroFecha').value='';
+  document.getElementById('filtroEstilo').value='';
+  document.getElementById('filtroOrden').value='';
+  document.getElementById('btnExportarExcel').disabled=true;
+  tooltip.style.display='none';
+  const secRes = document.getElementById('resumenLineaSection'); if(secRes) secRes.style.display='none';
+  mostrarMensajeUpload('Cargue el Programa de producción y las Rutas Activas, luego presione BALANCEAR','wait');
+  renderizarTabla(); renderizarTarjetas();
+});
+
+/* BALANCEAR */
+document.getElementById('btnBalancear').addEventListener('click', procesarBalance);
+
+/* FILTROS */
+document.getElementById('filtroFecha').addEventListener('change', aplicarFiltros);
+document.getElementById('filtroEstilo').addEventListener('input',  aplicarFiltros);
+document.getElementById('filtroOrden').addEventListener('input',   aplicarFiltros);
+document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
+  document.getElementById('filtroFecha').value='';
+  document.getElementById('filtroEstilo').value='';
+  document.getElementById('filtroOrden').value='';
+  document.querySelectorAll('#lineaDropdownList input[type="checkbox"]').forEach(cb=>{cb.checked=true;});
+  actualizarLineasSeleccionadas(); aplicarFiltros();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   TEMA CLARO / OSCURO
+   ═══════════════════════════════════════════════════════════ */
+let temaOscuro = true;
+function toggleTema() {
+  temaOscuro = !temaOscuro;
+  document.body.classList.toggle('light-mode', !temaOscuro);
+  document.getElementById('iconTemaClaro').style.display  = temaOscuro ? ''     : 'none';
+  document.getElementById('iconTemaOscuro').style.display = temaOscuro ? 'none' : '';
+  document.getElementById('lblTema').textContent = temaOscuro ? 'Modo claro' : 'Modo oscuro';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RELOJ
+   ═══════════════════════════════════════════════════════════ */
+function actualizarReloj() {
+  const el = document.getElementById('reloj'); if (!el) return;
+  el.textContent = new Date().toLocaleTimeString('es-GT', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+actualizarReloj();
+setInterval(actualizarReloj, 1000);
+actualizarTotalHorasSemana();
+
+/* Render inicial vacío */
+renderizarTabla();
+renderizarTarjetas();
+</script>
+</body>
+</html>
